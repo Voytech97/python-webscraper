@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 def get_text_from_html(html_content, line_numbers):
     soup = BeautifulSoup(html_content, 'html.parser')
     lines = soup.get_text().split('\n')
-    selected_lines = '\n'.join([lines[num - 1] for num in line_numbers])
+    selected_lines = '\n'.join([lines[num - 1] for num in line_numbers if 0 < num <= len(lines)])
     whole_text = soup.get_text()  # Pobranie całej zawartości strony bez znaczników HTML
     return selected_lines, whole_text
 
