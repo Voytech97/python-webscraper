@@ -1,4 +1,3 @@
-# Wersja z samodzielnym uzupełnianiem inputa
 from bs4 import BeautifulSoup
 import requests
 import tkinter as tk
@@ -9,7 +8,18 @@ def get_text_from_html(html_content, line_numbers):
     lines = soup.get_text().split('\n')
     selected_lines = '\n'.join([lines[num - 1] for num in line_numbers if 0 < num <= len(lines)])
     whole_text = soup.get_text()  # Pobranie całej zawartości strony bez znaczników HTML
-    return selected_lines, whole_text
+    
+    # Znalezienie numeru linii zawierającej drugie wystąpienie słowa "Klasyki"
+    klasyki_count = 0
+    klasyki_line_number = 0
+    for i, line in enumerate(lines):
+        if "Klasyki" in line:
+            klasyki_count += 1
+            if klasyki_count == 2:
+                klasyki_line_number = i + 1
+                break
+    
+    return selected_lines, whole_text, klasyki_line_number
 
 def collect_data():
     # Pobieranie adresu URL z pola tekstowego
@@ -25,7 +35,7 @@ def collect_data():
     # Sprawdzanie, czy pobranie danych było udane
     if response.status_code == 200:
         # Pobieranie wybranych linii tekstu z zawartości strony oraz całej zawartości strony bez znaczników HTML
-        selected_lines, whole_text = get_text_from_html(response.content, [44,7,16,20,90,1])
+        selected_lines, whole_text, klasyki_line_number = get_text_from_html(response.content, [44,7,16,20,90,1])
         
         # Otwieranie pliku wspólnego w trybie dopisywania
         with open("tekst.txt", 'a', encoding="utf-8") as file:
@@ -33,72 +43,13 @@ def collect_data():
             file.write("\n")  # Oddzielanie nowego wpisu
             file.write(f"Adres URL: {selected_url}\n")
             file.write(selected_lines + "\n")  # Zapisanie wybranych linii tekstu
+            
+            if klasyki_line_number != 0:
+                klasyki_line = whole_text.split('\n')[klasyki_line_number - 1]
+                file.write(f"Linijka z drugim wystąpieniem słowa 'Klasyki': {klasyki_line}\n")
 
         status_label.config(text="Pomyślnie dodano nowe dane do pliku 'tekst.txt'")
         print("Pomyślnie dodano nowe dane do pliku 'tekst.txt'")
-    else:
-        status_label.config(text="Wystąpił błąd podczas pobierania danych ze strony")
-        print("Wystąpił błąd podczas pobierania danych ze strony")
-
-    # Pobieranie adresu URL z pola tekstowego
-    selected_url = url_entry.get()
-    
-    # Dodanie przedrostka "https://" jeśli nie jest już dodany
-    if not selected_url.startswith("http://") and not selected_url.startswith("https://"):
-        selected_url = "https://" + selected_url
-    
-    # Pobieranie zawartości strony
-    response = requests.get(selected_url)
-    
-    # Sprawdzanie, czy pobranie danych było udane
-    if response.status_code == 200:
-        # Pobieranie wybranych linii tekstu z zawartości strony oraz całej zawartości strony bez znaczników HTML
-        selected_lines, whole_text = get_text_from_html(response.content, [44])
-        
-        # Tworzenie nazwy pliku na podstawie wybranego URL
-        parsed_url = urlparse(selected_url)
-        filename = "tekst_" + parsed_url.netloc + ".txt"
-        
-        # Otwieranie pliku w trybie dopisywania
-        with open(filename, 'a', encoding="utf-8") as file:
-            # Dodawanie nowych danych do pliku
-            file.write("\n")  # Oddzielanie nowego wpisu
-            file.write(f"Adres URL: {selected_url}\n")
-            file.write(selected_lines + "\n")  # Zapisanie wybranych linii tekstu
-
-        status_label.config(text=f"Pomyślnie dodano nowe dane do pliku '{filename}'")
-        print(f"Pomyślnie dodano nowe dane do pliku '{filename}'")
-    else:
-        status_label.config(text="Wystąpił błąd podczas pobierania danych ze strony")
-        print("Wystąpił błąd podczas pobierania danych ze strony")
-
-    # Pobieranie adresu URL z pola tekstowego
-    selected_url = url_entry.get()
-    
-    # Dodanie przedrostka "https://" jeśli nie jest już dodany
-    if not selected_url.startswith("http://") and not selected_url.startswith("https://"):
-        selected_url = "https://" + selected_url
-    
-    # Pobieranie zawartości strony
-    response = requests.get(selected_url)
-    
-    # Sprawdzanie, czy pobranie danych było udane
-    if response.status_code == 200:
-        # Pobieranie wybranych linii tekstu z zawartości strony oraz całej zawartości strony bez znaczników HTML
-        selected_lines, whole_text = get_text_from_html(response.content, [44])
-        
-        # Tworzenie nazwy pliku na podstawie wybranego URL
-        parsed_url = urlparse(selected_url)
-        filename = "tekst_" + parsed_url.netloc + ".txt"
-        
-        # Zapisywanie pobranych linii tekstu oraz całej zawartości strony do pliku tekstowego
-        with open(filename, 'w', encoding="utf-8") as file:
-            file.write(whole_text + "\n")  # Zapisanie całej zawartości strony
-            file.write(selected_lines + "\n")  # Zapisanie wybranych linii tekstu
-
-            
-        status_label.config(text=f"Pomyślnie zapisano wybrane linie i całą zawartość strony do pliku '{filename}'")
-        print(f"Pomyślnie zapisano wybrane linie i całą zawartość strony do pliku '{filename}'")
     else:
         status_label.config(text="Wystąpił błąd podczas pobierania danych ze strony")
         print("Wystąpił błąd podczas pobierania danych ze strony")
@@ -125,6 +76,8 @@ status_label = tk.Label(root, text="")
 status_label.pack(pady=5)
 
 root.mainloop()
+
+
 
 # Wersja z predefiniowaną listą adresów
 
