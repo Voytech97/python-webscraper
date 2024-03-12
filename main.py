@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
 import tkinter as tk
-from urllib.parse import urlparse
 
 def get_text_from_html(html_content, line_numbers):
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -21,16 +20,13 @@ def get_text_from_html(html_content, line_numbers):
     
     return selected_lines, whole_text, klasyki_line_number
 
-def collect_data():
-    # Pobieranie adresu URL z pola tekstowego
-    selected_url = url_entry.get()
-    
+def collect_data(url):
     # Dodanie przedrostka "https://" jeśli nie jest już dodany
-    if not selected_url.startswith("http://") and not selected_url.startswith("https://"):
-        selected_url = "https://" + selected_url
+    if not url.startswith("http://") and not url.startswith("https://"):
+        url = "https://" + url
     
     # Pobieranie zawartości strony
-    response = requests.get(selected_url)
+    response = requests.get(url)
     
     # Sprawdzanie, czy pobranie danych było udane
     if response.status_code == 200:
@@ -41,7 +37,7 @@ def collect_data():
         with open("tekst.txt", 'a', encoding="utf-8") as file:
             # Dodawanie nowych danych do pliku
             file.write("\n")  # Oddzielanie nowego wpisu
-            file.write(f"Adres URL: {selected_url}\n")
+            file.write(f"Adres URL: {url}\n")
             file.write(selected_lines + "\n")  # Zapisanie wybranych linii tekstu
             
             if klasyki_line_number != 0:
@@ -68,14 +64,32 @@ url_entry = tk.Entry(url_frame)
 url_entry.grid(row=0, column=1)
 
 # Przycisk do zbierania danych
-collect_button = tk.Button(root, text="Zbierz dane", command=collect_data)
+def collect_data_wrapper():
+    url = url_entry.get()
+    collect_data(url)
+
+collect_button = tk.Button(root, text="Zbierz dane", command=collect_data_wrapper)
 collect_button.pack(pady=5)
 
 # Etykieta na status
 status_label = tk.Label(root, text="")
 status_label.pack(pady=5)
 
+def scan_from_list():
+    with open("domeny.txt", 'r') as file:
+        urls = file.readlines()
+        urls = [url.strip() for url in urls]
+        for url in urls:
+            collect_data(url)
+
+# Przycisk do skanowania z listy
+scan_button = tk.Button(root, text="Skanuj z listy", command=scan_from_list)
+scan_button.pack(pady=5)
+
 root.mainloop()
+
+
+
 
 
 
